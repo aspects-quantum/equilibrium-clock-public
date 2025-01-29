@@ -171,7 +171,7 @@ def visualize_rates(biases,ids,idx=[0],V0=0.075,k_smooth=3):
 
         plotMrates(bias_list,M_lists,M_err_lists,channels)
 
-def plot_panel2(biases,ids,n_samp,k_smooth=3,T_fridge=150e-3,V0_SEN=0.075,V0_DQD=-0.045,idx=[0,1,2,3],channel="B-V-"):
+def plot_panel2(biases,ids,n_samp,k_smooth=3,T_fridge=180e-3,V0_SEN=0.075,V0_DQD=-0.045,idx=[0,1,2,3],channel="B-V-"):
     """
     Plot steady-state precision as a function of entropy production
 
@@ -431,7 +431,7 @@ def plot_panel2(biases,ids,n_samp,k_smooth=3,T_fridge=150e-3,V0_SEN=0.075,V0_DQD
     axs[0].legend(loc="upper left")
 
     plt.tight_layout()
-    plt.savefig("figs/paper/panel2.svg")
+    plt.savefig("figs/paper/panel2.pdf")
     plt.show()
     # plt.close()
 

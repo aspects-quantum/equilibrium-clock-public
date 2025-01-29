@@ -126,7 +126,7 @@ def main():
     #######################
     # DATA PRE-PROCESSING #
     #######################
-    # data_prepro(biases,ids,k_smooth=3,debug=False,idx=[0,1,2],mode="READ",noisy=True,channel="B-V-")
+    # data_prepro(biases,ids,k_smooth=3,debug=False,idx=[0,1,2,3],mode="READ",noisy=True,channel="B-V-")
 
     ########################
     # Rate matrix analysis #
@@ -144,7 +144,7 @@ def main():
 
     # visualize_rates(biases,ids,idx=[0],V0=0.075,k_smooth=3)
     # rate_stability_paper()
-    plot_panel2(biases,ids,n_samp=300,k_smooth=3,V0_SEN=0.075,V0_DQD=0.045,channel="B-V-")
+    # plot_panel2(biases,ids,n_samp=300,k_smooth=3,V0_SEN=0.075,V0_DQD=0.045,channel="B-V-")
     # plot_panel1()
     # plot_endmatter()
     # plot_readout_SNR(biases,ids)

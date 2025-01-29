@@ -357,7 +357,7 @@ def triple_point_readout_cumulative(x,*params):
 
     return y
 
-def obtain_states(folder_bias,id,mode="READ",k_smooth=3,debug=False,channel="B-V-",noisy=False,T_fridge=150e-3):
+def obtain_states(folder_bias,id,mode="READ",k_smooth=3,debug=False,channel="B-V-",noisy=False,T_fridge=180e-3):
     """
     Obtain and save discretized states for given data trace.
     Input:
@@ -368,7 +368,7 @@ def obtain_states(folder_bias,id,mode="READ",k_smooth=3,debug=False,channel="B-V
         debug       :   True -> plot intermediate results, False -> no plotting
         channel     :   string ~ "B-V-" for current, "PCA--" for reflectometry, others also possible
         noisy       :   False -> standard, True -> low-pass filter
-        T_fridge    :   150 mK standard
+        T_fridge    :   180 mK standard
     """
     # File names for the data folder
     file_names = ['dummy_parameter--',channel,'time-s-']
