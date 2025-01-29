@@ -1,8 +1,3 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
 import os
 import json
 
@@ -28,7 +23,6 @@ plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
     "font.size": 8
-
 })
 
 def data_prepro(biases,ids,k_smooth=3,debug=False,idx=[0],mode="READ",noisy=False,channel="B-V-"):
@@ -41,7 +35,7 @@ def data_prepro(biases,ids,k_smooth=3,debug=False,idx=[0],mode="READ",noisy=Fals
             obtain_states(folder_bias,id,mode=mode,k_smooth=k_smooth,debug=debug,channel=channel,noisy=noisy)
             print("... pre-processing data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+" complete!")
 
-def rates_postpro(biases,ids,k_smooth=3,print_res=False,idx=[0],plot=False,err_analysis=False,channel="B-V-"):
+def rates_postpro(biases,ids,k_smooth=3,print_res=False,idx=[0],channel="B-V-"):
     """
     Wrapper for post-processing the data into rates
     """
@@ -57,7 +51,7 @@ def rates_postpro(biases,ids,k_smooth=3,print_res=False,idx=[0],plot=False,err_a
 
             myRates = RateStatistics(states=states,time=time,identifier=(dot_bias,sen_bias))
 
-            M, GammaCond, GammaMarkov, M_err = myRates.time_stats_conditional(plot=plot,rates=True,err_analysis=err_analysis)
+            M, GammaCond, GammaMarkov, M_err = myRates.time_stats_conditional()
 
             np.save("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/M.npy",M)
             np.save("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/M_err.npy",M_err)
@@ -124,9 +118,10 @@ def main():
             #   '+0.905 bias',
               '+0.955 bias',
               ]
+    # Comment: The +0.905 mV bias case has been removed from the analysis due to large drifts in the rates
+    #          and because around time-tag ~1500sec the DQD got pinned in the "high" state.
 
     ids = [[id for id in os.listdir('data/'+folder) if os.path.isdir(os.path.join('data/'+folder, id))] for folder in biases]    
-
 
     #######################
     # DATA PRE-PROCESSING #
@@ -136,7 +131,7 @@ def main():
     ########################
     # Rate matrix analysis #
     ########################
-    # rates_postpro(biases,ids,k_smooth=3,idx=[0,1,2,3],plot=False,print_res=False,err_analysis=False,channel="B-V-")
+    # rates_postpro(biases,ids,k_smooth=3,idx=[0,1,2,3],print_res=False,channel="B-V-")
 
     ############################
     # Tunneling times analysis #
@@ -147,31 +142,12 @@ def main():
     # Visualizations #
     ##################
 
-    biases = [
-              '0 bias',
-              '+0.005 bias',
-              '+0.015 bias',
-              '+0.025 bias',
-              '+0.205 bias',
-              '+0.455 bias',
-              '+0.705 bias',
-              '+0.855 bias',
-            #   '+0.905 bias',
-              '+0.955 bias',
-              ]
-    ids = [[id for id in os.listdir('data/'+folder) if os.path.isdir(os.path.join('data/'+folder, id))] for folder in biases]    
-
     # visualize_rates(biases,ids,idx=[0],V0=0.075,k_smooth=3)
     # rate_stability_paper()
-    # precision_vs_dot_entropy(biases,ids,n_samp=500,V0=0.075,idx=[0,3],channel="B-V-")
     # plot_panel2(biases,ids,n_samp=300,k_smooth=3,V0_SEN=0.075,V0_DQD=0.045,channel="B-V-")
     # plot_panel1()
-    # plot_trace_rf_vs_dc()
     # plot_endmatter()
-    # plot_histo_LMH()
-    # plot_identificaton_error(biases,ids)
     # plot_readout_SNR(biases,ids)
-    # visualize_vs_sensorentropy(biases,ids,idx=[0,1,2,3])
     # plot_rates_histo()
 
 if __name__=='__main__':

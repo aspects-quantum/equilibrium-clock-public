@@ -2,14 +2,14 @@ cff-version: 1.2.0
 message: "If you use this software in your research, please cite it as follows."
 title: "Equilibrium Clock"
 authors:
-  - family-names: "Meier"
-    given-names: "Florian"
   - family-names: "Wadhia"
     given-names: "Vivek"
-  - family-names: "Craig"
-    given-names: "Daniel"
+  - family-names: "Meier"
+    given-names: "Florian"
   - family-names: "Fedele"
     given-names: "Federico"
+  - family-names: "Craig"
+    given-names: "David"
 version: "1.0.0" # Update this version as necessary
-date-released: "2025-01-22" # Use the actual release date of the project
+date-released: "2025-01-31" # Use the actual release date of the project
 url: "https://github.com/aspects-quantum/equilibrium-clock-public"

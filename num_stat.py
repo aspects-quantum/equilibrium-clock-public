@@ -72,7 +72,7 @@ def rate_err(sample, M = 50, Nprime_range = (10**np.linspace(1,2,25)).astype(int
     # plotting.                   #
     ###############################
     if False:
-        fig, axs = plt.subplots(1,2,figsize=(7.08333,2.0))
+        fig, axs = plt.subplots(2,1,figsize=(3.417,6.4))#(7.08333,3.5)
 
         axs[0].errorbar(Nprime_range,VarT_range,yerr=VarT_range/np.sqrt((M-1)/2),capsize=3,
                         color=col_scheme_BR[0],marker=".",linestyle="",label=r"${\rm Var}_{M,N'}[\widehat T]$")
@@ -82,6 +82,7 @@ def rate_err(sample, M = 50, Nprime_range = (10**np.linspace(1,2,25)).astype(int
         axs[0].set_ylabel(r"${\rm Var}[\widehat T]$ (s$^2$)")
         axs[0].set_xlabel(r"subsample size $N'$")
         axs[0].text(-0.1, 0.94, "(a)",transform=axs[0].transAxes)
+        axs[0].axis('equal')
 
 
         axs[1].errorbar(Nprime_range,VarG_range,yerr=VarG_range/np.sqrt((M-1)/2),capsize=3,
@@ -92,9 +93,10 @@ def rate_err(sample, M = 50, Nprime_range = (10**np.linspace(1,2,25)).astype(int
         axs[1].set_ylabel(r"${\rm Var}[\widehat\Gamma]$ (s$^{-2}$)")
         axs[1].set_xlabel(r"subsample size $N'$")
         axs[1].text(-0.1, 0.94, "(b)",transform=axs[1].transAxes)
-        
+        axs[1].axis('equal')
+
         plt.tight_layout()
-        plt.savefig("figs/paper/bootstrap.svg")#,dpi=600)
+        plt.savefig("figs/paper/bootstrap.pdf")#,dpi=600)
         plt.show()
 
     return np.sqrt(np.exp(z[0]) / N + HatGamma*intrinsic_error_relative) # np.sqrt((1/labda)**2 / len(sample) + eta2 * (1/labda)**4)

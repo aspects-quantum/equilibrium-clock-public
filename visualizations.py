@@ -103,7 +103,7 @@ def plot_Nstat(bias,precision,times,dac2,precision_theory_list,errorbars=None):
     pass
 
 def plotMrates(bias,M,M_err,channels):
-    fig, axs = plt.subplots(1,3,figsize=(7.08333,2.0),sharex=True)
+    fig, axs = plt.subplots(1,3,figsize=(7.08333,2.0),sharex=True,sharey=True)
     axs = np.atleast_2d(axs)
 
     # Labels
@@ -122,10 +122,10 @@ def plotMrates(bias,M,M_err,channels):
         for i in range(3):
             axs[0,i].errorbar(bias,_M[:,i,(i+1)%3],yerr=_M_err[:,i,(i+1)%3],capsize=3.0,
                               marker=markers[j],linestyle=linestyles[j],color=col_scheme_BR[0],
-                              alpha=alphas[j],label=r"$M_{"+str(i)+str((i+1)%3)+r"}$"+lbls[j])
+                              alpha=alphas[j],label=r"$M_{"+str(i+1)+str((i+1)%3+1)+r"}$"+lbls[j])
             axs[0,i].errorbar(bias,_M[:,(i+1)%3,i],yerr=_M_err[:,(i+1)%3,i],capsize=3.0,
                               marker=markers[j],linestyle=linestyles[j],color=col_scheme_BR[2],
-                              alpha=alphas[j],label=r"$M_{"+str((i+1)%3)+str(i)+r"}$"+lbls[j])
+                              alpha=alphas[j],label=r"$M_{"+str((i+1)%3+1)+str(i+1)+r"}$"+lbls[j])
             axs[0,i].legend(loc="upper left")
             if i==0:
                 axs[0,i].set_ylabel(r"rate (Hz)")
@@ -133,7 +133,7 @@ def plotMrates(bias,M,M_err,channels):
         # axs[0,i].grid(color="black",alpha=0.1,linestyle="--")
 
     plt.tight_layout()
-    plt.savefig("figs/paper/rates_vs_DQD_voltage.svg")#,dpi=600)
+    plt.savefig("figs/paper/rates_vs_DQD_voltage.pdf")#,dpi=600)
     # plt.close()
     plt.show()
     pass
@@ -170,159 +170,6 @@ def visualize_rates(biases,ids,idx=[0],V0=0.075,k_smooth=3):
             bias_list.append(bias_k)
 
         plotMrates(bias_list,M_lists,M_err_lists,channels)
-
-def precision_vs_dot_entropy(biases,ids,n_samp,k_smooth=3,T_fridge=150e-3,V0=-0.045,idx=[0],channel="B-V-"):
-    """
-    Plot steady-state precision as a function of entropy production
-
-        T_fridge    :   temperature of fridge in units Kelvin (K)
-    """
-    # Natural constants
-    kB = 8.617333262e-5 # eV / K
-
-    precision_stat  = np.zeros((len(biases),len(idx)))
-    precision_model = np.zeros((len(biases),len(idx)))
-
-    error_stat  = np.zeros((len(biases),len(idx)))
-
-    entropy = np.zeros((len(biases),len(idx)))
-
-    dac2s = np.zeros((len(idx)))
-
-    # Loop through all measurements
-    for k, folder_bias in enumerate(biases):
-        for l, id in enumerate(np.array(ids[k])[idx]):
-            rl_t = np.load("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/rl_t.npy")
-            lr_t = np.load("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/lr_t.npy")
-
-            # Determine entropy
-            meta_data = json.load(open("data/"+folder_bias+"/"+id+"/meta_data.json"))
-            deltaV = meta_data['instrument_summary']['dac']['dac1']
-
-            DAC2 = meta_data['instrument_summary']['dac']['dac2']
-            dac2s[l] = DAC2
-
-            entropy[k,l] = np.abs(deltaV+V0)*1e-3 / (kB * T_fridge)
-            print("V (V) :",np.abs(deltaV+V0)*1e-3)
-            print("T (K) :",T_fridge)
-
-            # Precision
-            myNumStat = NumberStatistics(rl_t,lr_t,method="bi")
-
-            t0 = 0.0
-            t1 = np.max(np.concatenate((lr_t,rl_t)))/n_samp
-
-            ev_times = np.linspace(t0,t1,n_samp)
-
-            prec, err = myNumStat.precision(ev_times,errorbar=True)
-
-            precision_stat[k,l] = prec[-3]
-            error_stat[k,l]     = err[-3]
-
-            # Theoretical prediction
-            M = np.load("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/M.npy")
-
-            # Start clock
-            myDQDClock = DQDClock(1,[0,0],[0,0],[0,0],0)
-            myDQDClock.M = M.astype(complex)
-
-            precision_model[k,l] = myDQDClock.getAccuracy(0)
-
-            print("... num-stat post-processing data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+" complete!")
-
-    plt.figure(figsize=(3.417,3))
-
-    for l in range(len(idx)):
-        idx_sort = np.argsort(entropy[:,l])
-
-        plt.errorbar(entropy[idx_sort,l],precision_stat[idx_sort,l],yerr=error_stat[idx_sort,l],capsize=3.0,marker="x",color=col_scheme_BR[2*l+1],label=r"sensor bias = $"+str(dac2s[l])+"\,$mV (exp.)")
-        plt.plot(entropy[idx_sort,l],precision_model[idx_sort,l],marker="o",color=col_scheme_BR[2*l],label=r"sensor bias = $"+str(dac2s[l])+"\,$mV (th.)")
-
-    plt.xlabel(r"entropy per tick $\Sigma_{\rm tick}\,(k_B)$")
-    plt.ylabel(r"precision $\mathcal N$")
-
-    plt.ylim(-0.1,1.6)
-
-    plt.legend(loc="upper left")
-    plt.tight_layout()
-    plt.savefig("figs/paper/precision_vs_DQD_entropy.jpg",dpi=600)
-    plt.show()
-    # plt.close()
-
-    pass
-
-
-def visualize_vs_sensorentropy(biases,ids,idx=[0,1,2,3],V0=0.075,n_samp=500,k_smooth=3,channel="B-V-"):
-    """
-        Plot clock precision as a function of the entropy dissipated by the
-        sensor dot
-    """
-    n_dot_bias = len(biases)
-    n_sen_bias = len(idx)
-
-    precision_stat  = np.zeros((len(biases),len(idx)))
-    precision_model = np.zeros((len(biases),len(idx)))
-
-    error_stat  = np.zeros((len(biases),len(idx)))
-
-    entropy_list = np.zeros((n_dot_bias,n_sen_bias))
-
-    dot_bias = np.zeros((len(biases)))
-
-    for kDot, bias in enumerate(biases):
-        meta_data = json.load(open("data/"+bias+"/"+ids[kDot][idx[0]]+"/meta_data.json"))
-        dot_bias[kDot] = meta_data['instrument_summary']['dac']['dac1']+V0
-        
-
-        for kSen, id in enumerate(np.array(ids[kDot])[idx]):
-            S_tot = np.load("data/"+bias+"/"+id+"/"+channel+"sensor_entropy.npy")
-            rl_t = np.load("data/"+bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/rl_t.npy")
-            lr_t = np.load("data/"+bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/lr_t.npy")
-            entropy_list[kDot,kSen] = S_tot/max(np.concatenate((rl_t,lr_t))) #np.abs(len(rl_t)-len(lr_t))
-
-            # Precision
-            myNumStat = NumberStatistics(rl_t,lr_t,method="bi")
-
-            t0 = 0.0
-            t1 = np.max(np.concatenate((lr_t,rl_t)))/n_samp
-
-            ev_times = np.linspace(t0,t1,n_samp)
-
-            prec, err = myNumStat.precision(ev_times,errorbar=True)
-
-            precision_stat[kDot,kSen] = prec[-3]
-            error_stat[kDot,kSen]     = err[-3]
-
-            # Theoretical prediction
-            M = np.load("data/"+bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/M.npy")
-
-            # Start clock
-            myDQDClock = DQDClock(1,[0,0],[0,0],[0,0],0)
-            myDQDClock.M = M.astype(complex)
-
-            precision_model[kDot,kSen] = myDQDClock.getAccuracy(0)
-
-            print("... num-stat post-processing data/"+bias+"/"+id+"/"+channel+"K"+str(k_smooth)+" complete!")
-
-    plt.figure(figsize=(3.417,3))
-
-    for kDot in range(len(biases)):
-        plt.errorbar(1e-11*entropy_list[kDot,:],precision_stat[kDot,:],yerr=error_stat[kDot,:],capsize=3.0,marker="x",color=col_scheme_BR[2*kDot+1],label=r"dot bias "+str(np.round(dot_bias[kDot],3))+" mV")
-        # plt.plot(entropy_list[kDot,:],precision_model[kDot,:],marker="o",color=col_scheme_BR[2*kDot],label="model "+str(kDot))
-
-    plt.xlabel(r"sensor entropy rate $\dot\Sigma$ ($10^{11}\, k_B\mathrm{s}^{-1}$)")
-    plt.ylabel(r"precision $\mathcal N$")
-
-    plt.ylim(-0.1,1.6)
-
-    plt.legend(loc="upper left")
-    plt.tight_layout()
-    plt.savefig("figs/paper/precision_vs_sensor_entropy.jpg",dpi=600)
-    plt.close()
-    # plt.show()
-
-    return None
-
 
 def plot_panel2(biases,ids,n_samp,k_smooth=2,T_fridge=150e-3,V0_SEN=0.075,V0_DQD=-0.045,idx=[0,1,2,3],channel="B-V-"):
     """
@@ -485,7 +332,7 @@ def plot_panel2(biases,ids,n_samp,k_smooth=2,T_fridge=150e-3,V0_SEN=0.075,V0_DQD
                     meanRT = np.sum(np.abs(v0/np.diag(M_dc)))
                     precision_model[1,kDot,kSen] = np.real(1/meanRT)
                     precision_stat[1,kDot,kSen], error_stat[1,kDot,kSen] = myEstimator.getLateSNR(
-                        n_samp,errorbar=True,debug=False)
+                        n_samp,errorbar=True)
                     
                     # Error bar model
                     def _SNR_TE(rates):
@@ -509,7 +356,7 @@ def plot_panel2(biases,ids,n_samp,k_smooth=2,T_fridge=150e-3,V0_SEN=0.075,V0_DQD
                     meanRT_rf = np.sum(np.abs(v0_rf/np.diag(M_rf)))
                     precision_model_rf[1,kDot,kSen] = np.real(1/meanRT_rf)
                     precision_stat_rf[1,kDot,kSen], error_stat_rf[1,kDot,kSen] = myEstimator_rf.getLateSNR(
-                        n_samp,errorbar=True,debug=False)
+                        n_samp,errorbar=True)
             except Exception as error:
                 print("failure to compute theoretical precision for \n"
                       +folder_bias+" | "+id+" | "+channel+"\n")
@@ -540,6 +387,8 @@ def plot_panel2(biases,ids,n_samp,k_smooth=2,T_fridge=150e-3,V0_SEN=0.075,V0_DQD
     axs[0].text(-0.25, 0.94, "(a)",transform=axs[0].transAxes)
     axs[0].set_ylim(-5,32)
     axs0R.set_ylim(-0.5,3.2)
+    # axs[0].set_ylim(-4,14)
+    # axs0R.set_ylim(-0.004,0.014)
     axs[0].legend(loc="upper left")
     axs0R.legend(loc="lower right")
 
@@ -709,149 +558,7 @@ def plot_panel1():
 
     pass
 
-
-def plot_histo_LMH():
-    """
-    Instructive visualization for LMH identification
-    (a) HISTO       (b) Current
-                    (c) States    
-    """
-
-    folder_bias = "+0.705 bias"
-    id = "5514"
-
-    sensor_data, time, meta_data = load_id("data/"+folder_bias,id,data_format=None,file_names=['dummy_parameter--',"B-V-",'time-s-'])
-
-    states = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/states.npy")
-    times  = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/time.npy")
-    rl_t = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/rl_t.npy")
-    lr_t  = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/lr_t.npy")
-
-    idxTest = np.where(time==rl_t[5])[0][0]
-
-    idxStart = idxTest-69
-    idxEnd  = idxTest+10
-
-    dT = times[1]-times[0]
-
-    print(idxStart)
-    print(idxEnd)
-
-    p0     = np.load("data/"+folder_bias+"/"+id+"/B-V-p0.npy")
-
-    fig, axs = plt.subplots(2,2,figsize=(3.417,2.5),width_ratios=[1,3],gridspec_kw={'hspace': 0.0, 'wspace': 0.0})
-
-    ymax = max(1e12*sensor_data[idxStart:idxEnd])*1.01
-    ymin = min(1e12*sensor_data[idxStart:idxEnd])/1.01
-
-    #############
-    # TOP LEFT  #
-    # HISTOGRAM #
-    #############
-    axs[0,0].hist(sensor_data*1e12,bins=35,density=True,color=col_scheme_BR[0],orientation='horizontal')
-    axs[0,0].set_ylim(168,192)
-    axs[0,0].set_xlim(0,0.19)
-    axs[0,0].set_ylabel(r"$I$ (pA)")
-    axs[0,0].set_xlabel(r"prob.")
-
-    axs[0,0].hlines([p0[0],p0[3],p0[6]],xmin=0,xmax=0.19,linewidth=1,linestyle="--",color="gray")
-
-    axs[0,0].text(-0.7, 0.88, "(a)",transform=axs[0,0].transAxes)
-
-    #############
-    # TOP RIGHT #
-    #############
-    axs[0,1].plot(time[idxStart:idxEnd]-time[idxStart],1e12*sensor_data[idxStart:idxEnd],
-             linewidth=1.0,color=col_scheme_BR[0],label=r"$I(t)$")
-    axs[0,1].set_yticks(ticks=[])
-    axs[0,1].set_xticks(ticks=[])
-    axs[0,1].set_ylim(168,192)
-    axs[0,1].set_xlim(0,time[idxEnd]-time[idxStart]-dT)
-
-    axs[0,1].hlines([p0[0],p0[3],p0[6]],xmin=0,xmax=time[idxEnd]-time[idxStart]-dT,linewidth=1,linestyle="--",color="gray")
-
-    axs[0,1].text(0.03, 0.88, "(b)",transform=axs[0,1].transAxes)
-
-
-    #############
-    # LOW RIGHT #
-    #############
-    axs[1,1].stairs(states[idxStart:idxEnd],time[idxStart:idxEnd+1]-time[idxStart]-dT/2,color=col_scheme_BR[4],label=r"$s(t)$")
-    axs[1,1].set_ylim(-0.5,2.5)
-    axs[1,1].set_yticks(ticks=[0,1,2],labels=["0","L","R"])
-    axs[1,1].set_xlim(0,time[idxEnd]-time[idxStart]-dT)
-    axs[1,1].set_xlabel(r"time $t$ (s)")
-
-    axs[1,1].text(0.03, 0.88, "(c)",transform=axs[1,1].transAxes)
-
-    fig.delaxes(axs[1,0])
-
-    plt.tight_layout()
-    plt.savefig("figs/paper/histo_LMH.jpg",dpi=600)
-    plt.show()
-
-    pass
-
-def plot_identificaton_error(biases,ids,k_smooth=2,V0_DQD=0.075,V0_SEN=-0.045):
-    """
-    Visualization plot for error in the state identification
-    """
-    channels = ["B-V-","PCA--"]
-
-    dot_bias = np.zeros((len(biases)))
-    sen_bias = np.zeros((4))
-
-    errors = np.zeros((len(biases),4,2))
-
-    for kDot, folder_bias in enumerate(biases):
-        meta_data = json.load(open("data/"+folder_bias+"/"+ids[kDot][0]+"/meta_data.json"))
-        dot_bias[kDot] = meta_data['instrument_summary']['dac']['dac1']+V0_DQD
-
-        for kSen, id in enumerate(np.array(ids[kDot])):
-            if kDot == 0:
-                # Sensor bias
-                meta_data = json.load(open("data/"+folder_bias+"/"+ids[kDot][kSen]+"/meta_data.json"))
-                sen_bias[kSen] = meta_data['instrument_summary']['dac']['dac2']+V0_SEN
-
-            for kCh, channel in enumerate(channels):
-                # Load experimental data
-                states = np.load("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/states.npy")
-                times  = np.load("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/time.npy")
-                err  = np.load("data/"+folder_bias+"/"+id+"/"+channel+"K"+str(k_smooth)+"/err.npy")
-
-                errors[kDot,kSen,kCh] = np.average(err)
-
-    fig, ax1 = plt.subplots(figsize=(3.417,2.0))
-
-    # dc axis
-    ax1.errorbar(sen_bias,np.average(errors[:,:,0],axis=0),yerr=np.std(errors[:,:,0],axis=0),capsize=3,
-                 color=col_scheme_BR[0],marker=".",label="dc") #,label=r"$V_{\rm sen}="+str(np.round(dot_bias[k],3))+"$ (mV)")
-    ax1.errorbar([],[],yerr=[],capsize=3,color=col_scheme_BR[2],marker="*",label="rf")
-    ax1.legend(loc="best")
-    ax1.set_xlabel(r"bias $V_{\rm sen}$ (mV)")
-    ax1.set_ylabel(r"error $\varepsilon$")
-    ax1.set_yscale("log")
-
-    ax2 = ax1.twiny()
-    
-    # rf axis
-    rf_freq = np.array([128e6,116e6,115e6,114e6])[::-1]
-    ax2.errorbar(rf_freq*1e-6,np.average(errors[:,:,1],axis=0),yerr=np.std(errors[:,:,1],axis=0),capsize=3,
-                 color=col_scheme_BR[2],marker="*",label="rf") #,label=r"$V_{\rm sen}="+str(np.round(dot_bias[k],3))+"$ (mV)")
-    ax2.set_xlabel(r"frequency $f_{\rm rf}$ (MHz)")
-    ax2.invert_xaxis()
-
-
-    # plt.legend(loc="upper right")
-
-    plt.tight_layout()
-    ax1.grid(color="gray",linestyle="--",alpha=0.4)
-    plt.savefig("figs/paper/ID_error.jpg",dpi=600)
-    plt.show()
-
-    pass
-
-def plot_readout_SNR(biases,ids,k_smooth=2,V0_DQD=0.075,V0_SEN=-0.045):
+def plot_readout_SNR(biases,ids,k_smooth=3,V0_DQD=0.075,V0_SEN=0.0):#-0.045):
     """
     Instructive visualization for LMH identification
         (a) HISTO       (b) Current         (c) SNR
@@ -991,7 +698,7 @@ def plot_readout_SNR(biases,ids,k_smooth=2,V0_DQD=0.075,V0_SEN=-0.045):
 
     pass
 
-def plot_rates_histo(k_smooth=2):
+def plot_rates_histo(k_smooth=3):
     """
     Instructive visualization for rates
     (a) leaving 0   (b) leaving 1   (c) leaving 2
@@ -1075,94 +782,6 @@ def plot_rates_histo(k_smooth=2):
 
     pass
 
-
-def plot_trace_rf_vs_dc():
-    """
-    (a) dc trace
-
-    (b) rf trace
-    """
-
-    folder_bias = "+0.705 bias"
-    id = "5514"
-
-    sensor_data, time, meta_data = load_id("data/"+folder_bias,id,data_format=None,file_names=['dummy_parameter--',"B-V-",'time-s-'])
-    sensor_data_rf, _t, _m = load_id("data/"+folder_bias,id,data_format=None,file_names=['dummy_parameter--',"PCA--",'time-s-'])
-    sensor_data_rfX, _t, _m = load_id("data/"+folder_bias,id,data_format=None,file_names=['dummy_parameter--',"C-V-",'time-s-'])
-    sensor_data_rfY, _t, _m = load_id("data/"+folder_bias,id,data_format=None,file_names=['dummy_parameter--',"D-V-",'time-s-'])
-
-    # sensor_data_rf = -(sensor_data_rf - np.average(sensor_data_rf)) * np.std(sensor_data) / np.std(sensor_data_rf) + np.average(sensor_data)
-
-    states = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/states.npy")
-    times  = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/time.npy")
-    rl_t = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/rl_t.npy")
-    lr_t  = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/lr_t.npy")
-
-    dT = times[1]-times[0]
-
-    idxTest = np.where(time==rl_t[5])[0][0]
-
-    idxStart = idxTest-80
-    idxEnd  = idxTest+100
-
-    print(idxStart)
-    print(idxEnd)
-
-    p0     = np.load("data/"+folder_bias+"/"+id+"/B-V-p0.npy")
-
-    # Discretized states renormalize
-    idx0 = np.where(states==0)
-    idx1 = np.where(states==1)
-    idx2 = np.where(states==2)
-    states[idx0] = p0[0]
-    states[idx1] = p0[3]
-    states[idx2] = p0[6]
-
-    fig, axs = plt.subplots(2,1,figsize=(3.6,2.8),sharex=True)
-    
-    (ax1,ax2) = axs
-
-    ymax = max(1e12*sensor_data[idxStart:idxEnd])*1.01
-    ymin = min(1e12*sensor_data[idxStart:idxEnd])/1.01
-
-    #############
-    # bottom DC #
-    #############
-    ax1.plot(time[idxStart:idxEnd]-time[idxStart],1e12*sensor_data[idxStart:idxEnd],
-             color=col_scheme_BR[0],label=r"$I_{\rm dc}$")
-    # ax1.set_ylim(ymin,ymax)
-    ax1.set_xlim(0,time[idxEnd]-time[idxStart])
-    ax1.grid(linewidth="0.6",linestyle="--",alpha=0.5,color="gray")
-    ax1.text(-0.17, 0.94, "(a)",transform=ax1.transAxes)
-    # ax1.legend(loc="lower right")
-    ax1.set_ylabel(r"current $I_{\rm sen}$ (pA)")
-
-    #############
-    # bottom RF #
-    #############
-    ax2.plot(time[idxStart:idxEnd]-time[idxStart],1e3*sensor_data_rfY[idxStart:idxEnd],
-             color=col_scheme_BR[2],label=r"$V^Y_{\rm rf}$")
-    # ax2.plot(time[idxStart:idxEnd]-time[idxStart],1e3*sensor_data_rfX[idxStart:idxEnd],
-    #          color=col_scheme_BR[3],alpha=0.5,linewidth=1,label=r"$V^X_{\rm rf}$")
-    # ax2.plot(time[idxStart:idxEnd]-time[idxStart],1e3*sensor_data_rfY[idxStart:idxEnd],
-    #          color=col_scheme_BR[1],alpha=0.5,linewidth=1,label=r"$V^Y_{\rm rf}$")
-    # ax2.plot(time[idxStart:idxEnd]-time[idxStart],1e3*sensor_data_rf[idxStart:idxEnd],
-    #          color=col_scheme_BR[2],label=r"$V^{\rm PCA}_{\rm rf}$")
-    ax2.set_xlim(0,time[idxEnd]-time[idxStart])
-    ax2.grid(linewidth="0.6",linestyle="--",alpha=0.5,color="gray")
-    ax2.text(-0.17, 0.94, "(b)",transform=ax2.transAxes)
-    # ax2.legend(loc="lower right")
-    ax2.set_ylabel(r"voltage $V_{\rm rf}^Y$ (mV)")
-    ax2.set_xlabel(r"reference time $t$ (s)")
-
-
-    plt.tight_layout()
-    plt.savefig("figs/paper/trace_dc_vs_rf.svg")#,dpi=600)
-    plt.show()
-
-    pass
-
-
 def plot_endmatter():
     """
     Instructive visualization for LMH identification
@@ -1183,8 +802,8 @@ def plot_endmatter():
     sensor_data_rfY, _t, _m = load_id("data/"+folder_bias,id,data_format=None,file_names=['dummy_parameter--',"D-V-",'time-s-'])
 
 
-    states = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(2)+"/states.npy")
-    states_rfY = np.load("data/"+folder_bias+"/"+id+"/PCA--K"+str(2)+"/states.npy")
+    states = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/states.npy")
+    states_rfY = np.load("data/"+folder_bias+"/"+id+"/PCA--K"+str(3)+"/states.npy")
     times  = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/time.npy")
     rl_t = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/rl_t.npy")
     lr_t  = np.load("data/"+folder_bias+"/"+id+"/B-V-K"+str(3)+"/lr_t.npy")
@@ -1213,7 +832,7 @@ def plot_endmatter():
     axs[0,0].hist(sensor_data*1e12,bins=35,density=True,color=col_scheme_BR[0],orientation='horizontal')
     axs[0,0].set_ylim(168,192)
     axs[0,0].set_xlim(0,0.27)
-    axs[0,0].set_ylabel(r"$I_{\rm sen}$ (pA)")
+    axs[0,0].set_ylabel(r"$I_{\rm cs}$ (pA)")
     axs[0,0].set_xlabel(r"prob.")
 
     axs[0,0].hlines([p0[0],p0[3],p0[6]],xmin=0,xmax=0.4,linewidth=1,linestyle="--",color="gray")
@@ -1359,7 +978,7 @@ def rate_stability_paper(channel="B-V-",sample_width=5000,step=0.2,k_smooth=3):
 
     ids = [[id for id in os.listdir('data/'+folder) if os.path.isdir(os.path.join('data/'+folder, id))] for folder in biases]    
 
-    fig, axs = plt.subplots(2,1,figsize=(7.08333,4.0),sharex=True)
+    fig, axs = plt.subplots(1,2,figsize=(7.08333,2.0),sharex=True,sharey=True)
 
 
     for kDot, folder_bias in enumerate(biases):
@@ -1376,37 +995,46 @@ def rate_stability_paper(channel="B-V-",sample_width=5000,step=0.2,k_smooth=3):
             step_width  = int(sample_width*step)
             num_samples = 1 + int((num_states-sample_width)/step_width)
 
-            diag_array  = np.zeros((num_samples,3))
+            diag_array      = np.zeros((num_samples,3))
+            diag_err_array  = np.zeros((num_samples,3))
             for k in range(num_samples):
                 print(str(k)+" / "+str(num_samples))
                 try:
                     myRates = RateStatistics(states=states[k*step_width:k*step_width + sample_width],time=time[:sample_width],identifier=(0,0))
-                    _M, GammaCond, GammaMarkov, _M_err = myRates.time_stats_conditional(plot=False,rates=True,err_analysis=False)
-                    diag_array[k,:] = -np.diag(_M)
+                    _M, GammaCond, GammaMarkov, _M_err = myRates.time_stats_conditional()
+                    diag_array[k,:]     = -np.diag(_M)
+                    diag_err_array[k,:] = np.abs(np.diag(_M_err))
                 except Exception as error:
-                    diag_array[k,:] = diag_array[k-1,:]
+                    diag_array[k,:]     = diag_array[k-1,:]
+                    diag_err_array[k,:] = diag_err_array[k-1,:]
                     print(error)
 
             colors = ["midnightblue","darkviolet","deeppink"]
 
             # plt.title(folder_bias)
             for s in range(3):
+                # axs[kDot].errorbar(time[:-sample_width:step_width],diag_array[:,s],yerr=diag_err_array[:,s],
+                #                    capsize=0,color=colors[s],
+                #                    marker=".",markersize=5,label=r"$\Gamma_{"+str(s+1)+r"}$")
                 axs[kDot].plot(time[:-sample_width:step_width],diag_array[:,s],color=colors[s],
-                            marker=".",markersize=5,label=r"$\Gamma_{"+str(s)+r"}$")
+                                   marker=".",markersize=3,linewidth=0.75,label=r"$\Gamma_{"+str(s+1)+r"}$")
                 axs[kDot].hlines(-M[s,s],xmin=0,xmax=time[-sample_width],color=colors[s],
-                            linestyle="--")#,label=r"$\Gamma_{"+str(s)+", \mathrm{MLE}}$")
+                            linewidth=0.75,linestyle="--")#,label=r"$\Gamma_{"+str(s)+", \mathrm{MLE}}$")
                 axs[kDot].fill_between([-1,1+time[-sample_width]],-M[s,s]-M_err[s,s]/2,-M[s,s]+M_err[s,s]/2,color=colors[s],
                             linestyle=":",alpha=0.2)
             
             axs[kDot].set_xlim(0,1700)
             axs[kDot].set_ylabel(r"rate $\Gamma$ (Hz)")
-            axs[kDot].legend(loc="lower right")
+            if kDot==1:
+                axs[kDot].legend(loc="upper right")
             # axs[kDot].set_ylim(np.max(np.abs(diag_array))*-0.05,np.max(np.abs(diag_array))*1.05)
             axs[kDot].set_ylim(-3,76)
             axs[kDot].text(0.03, 0.1, r"$V_{\rm DQD}="+bias_labels[kDot]+r"\,{\rm mV}$",transform=axs[kDot].transAxes)
+            axs[kDot].set_xlabel(r"lab time $t$ (s)")
 
-    axs[1].set_xlabel(r"time $t$ (s)")
+    axs[0].text(-0.12, 0.93, "(a)",transform=axs[0].transAxes)
+    axs[1].text(-0.09, 0.93, "(b)",transform=axs[1].transAxes)
 
     plt.tight_layout()
-    plt.savefig("figs/paper/rate_stability.svg")#,dpi=600)
+    plt.savefig("figs/paper/rate_stability.pdf")#,dpi=600)
     plt.show()
