@@ -20,7 +20,7 @@ INPUT_SIGNAL_POWER = -20 # in dBm
 
 # Attenuators & amplifiers
 dircoupler_att = -20 #dB (directional coupler)
-tot_fridge_att = -32 #dB (attenuators in fridge)
+tot_fridge_att = -31 #dB (attenuators in fridge)
 rt_att = -20 #dB (attenuator placed outside fridge)
 cryo_amp = 32 #dB (cryogenic amplifier)
 
