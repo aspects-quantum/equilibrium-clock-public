@@ -1,4 +1,5 @@
 # equilibrium-clock-public
+Code is not designed for end-users. Shared for reproducability of the results in [arXiv:to-be-added](). For questions please reach out to: florianmeier256 AT gmail DOT com
 
 - Uncomment the desired function in main.py() to replot a figure from the paper
     - The data_prepro() function is there to read the original measurement data and convert it into discrete dates
@@ -18,3 +19,4 @@
 - The measurement data has been taken by Vivek Wadhia under supervision of Federico Fedele
 - The code for the data analysis and visualization has been written by Florian Meier, based on the algorithm from David Craig
 - The code in data_converter.py for identifying states and counting LR vs RL cycles is based on David Craig's PhD thesis, [DOI:10.5287/ora-nbx0jzppy](https://www.doi.org/10.5287/ora-nbx0jzppy) and shared here with his kind permission
+- The code in reflecto_pwr.py has been developed by Vivek Wadhia
