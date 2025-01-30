@@ -115,18 +115,15 @@ def main():
               '+0.455 bias',
               '+0.705 bias',
               '+0.855 bias',
-            #   '+0.905 bias',
               '+0.955 bias',
               ]
-    # Comment: The +0.905 mV bias case has been removed from the analysis due to large drifts in the rates
-    #          and because around time-tag ~1500sec the DQD got pinned in the "high" state.
 
     ids = [[id for id in os.listdir('data/'+folder) if os.path.isdir(os.path.join('data/'+folder, id))] for folder in biases]    
 
     #######################
     # DATA PRE-PROCESSING #
     #######################
-    data_prepro(biases,ids,k_smooth=3,debug=False,idx=[0,1,2,3],mode="READ",noisy=True,channel="PCA--")
+    # data_prepro(biases,ids,k_smooth=3,debug=False,idx=[0,1,2,3],mode="READ",noisy=True,channel="PCA--")
 
     ########################
     # Rate matrix analysis #
@@ -142,13 +139,13 @@ def main():
     # Visualizations #
     ##################
 
-    # visualize_rates(biases,ids,idx=[0],V0=0.075,k_smooth=3)
-    # rate_stability_paper()
+    visualize_rates(biases,ids,idx=[0],V0=0.075,k_smooth=3)
+    rate_stability_paper()
     plot_panel2(biases,ids,n_samp=300,k_smooth=3,V0_SEN=0.075,V0_DQD=0.045,channel="B-V-")
-    # plot_panel1()
-    # plot_endmatter()
-    # plot_readout_SNR(biases,ids)
-    # plot_rates_histo()
+    plot_panel1()
+    plot_endmatter()
+    plot_readout_SNR(biases,ids)
+    plot_rates_histo()
 
 if __name__=='__main__':
     main()
