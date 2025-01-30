@@ -23,7 +23,7 @@ Here RL tick means hole is transported from drain to source and LR tick means ho
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 
-Bias folder names are relative to actual bias of sensor dot (dac 2) = -0.075 mV.
+Bias folder names are relative to DQD bias (dac 1) = -0.075 mV.
 
 Actual 		Relative
 bias [mV]	bias [mV]
