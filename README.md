@@ -1,5 +1,5 @@
 # equilibrium-clock-public
-Code is not designed for end-users. Shared for reproducability of the results in [arXiv:to-be-added](). For questions please reach out to: florianmeier256 AT gmail DOT com
+Code is not designed for end-users. Shared for reproducability of the results in [arXiv:2502.00096](https://arxiv.org/abs/2502.00096). For questions please reach out to: florianmeier256 AT gmail DOT com
 
 - Uncomment the desired function in main.py() to replot a figure from the paper
     - The data_prepro() function is there to read the original measurement data and convert it into discrete dates
